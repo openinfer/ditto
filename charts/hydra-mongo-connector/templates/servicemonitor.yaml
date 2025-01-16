@@ -1,0 +1,28 @@
+{{ if .Values.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    {{- include "mongo-connector.labels" . | nindent 4 }}
+    release: prometheus-operator
+  name: {{ include "mongo-connector.appname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpoints:
+    - interval: 30s
+      path: /metrics
+      port: http
+      relabelings:
+        - action: labelmap
+          regex: "__meta_kubernetes_pod_label_(app_ditto_live_.*|.*_app_ditto_live_.*|app_kubernetes_io_.*)"
+          replacement: "pod_label_$1"
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mongo-connector.appname" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      scrape-metrics: "true"
+{{ end }}

@@ -1,0 +1,113 @@
+# Default values for hydra mongo connector server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+image:
+  name: quay.io/ditto-external/big-peer-mongo-connector:ref-d8be3de-release 
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+  # - name: quay.io
+
+serviceMonitor:
+  enabled: false
+
+appId: ""
+
+hydraCluster:
+  name: hydra-store
+  queryUrl: "http://{{ $.Values.hydraCluster.name }}:8080/"
+  sessionUrl: "dnssrv+_http._tcp.{{ $.Values.hydraCluster.name }}-session"
+  transactionsTopic: "{{ $.Values.hydraCluster.name }}-{{ $.Release.Namespace }}-transactions"
+
+consul:
+  # Secret name with `token` data reference
+  httpTokenSecret: ""
+  # http Token value
+  httpToken: ""
+  # http address
+  httpAddr: ""
+  # http SSL verify true/false
+  httpSslVerify: false
+
+kafka:
+  clusterName: kafka
+  namespace: "{{ .Release.Namespace }}"
+  # These are all kind of "hardcoded" refering to the live-query value.yaml and assume
+  # the kafka used by CDC is the same as the one with hydra-store.
+  #
+  # We would need to inject the correct value and setting up proper network policy
+  # for production.
+  storeKafkaBootstrapHost: "{{ tpl $.Values.kafka.clusterName . }}-kafka-brokers.{{ tpl $.Values.kafka.namespace . }}:9092"
+  cdcKafkaBootstrapHost: "live-query-transport-{{ tpl $.Values.kafka.clusterName . }}-kafka-bootstrap.{{ tpl $.Values.kafka.namespace . }}:9093"
+  cdcTopic: "hydra-cdc-output-{{ tpl $.Values.appId . }}"
+
+mongodb:
+  # The secret name that contains the connection string and database name
+  # Format is
+  # MONGODB_CONNECTION_STRING: "mongodb+srv://user:password@cluster_endpoint/?retryWrites=true&w=majority&appName=Cluster0"
+  # MONGODB_DATABASE: "database_name"
+  secret_name: ""
+
+  # If secret_name is provided this will be ignored
+  # "mongodb+srv://user:password@cluster_endpoint/?retryWrites=true&w=majority&appName=Cluster0"
+  connection_string: ""
+
+  # If secret_name is provided this will be ignored
+  database: ""
+
+  # json Object containing the collection name and the fields to be used as the key
+  # collections: |-
+  #   {
+  #     "collection_name": {
+  #       "fields": ["field1", "field2"]
+  #     }
+  #   }
+  collections:
+
+  configPath: "/etc/hydra-mongo-connector/mongodb_config.json"
+
+# RUST LOG LEVELS
+logLevels: "hydra_mongo_connector=info"
+additionalEnvs:
+  # MongoDB client options
+  # - name: MDB_CLIENT_MAX_POOL_SIZE
+  #   value: "10"
+  # - name: MDB_CLIENT_MIN_POOL_SIZE
+  #   value: "0"
+  # - name: MDB_CLIENT_MAX_CONNECTING
+  #   value: "2"
+  # - name: MDB_CLIENT_MAX_IDLE_TIME
+  #   value: "10s"
+  # - name: MDB_CLIENT_CONNECT_TIMEOUT
+  #   value: "10s"
+  # - name: MDB_CLIENT_SERVER_SELECTION_TIMEOUT
+  #   value: "30s"
+
+resources:
+  # limits:
+  #   cpu: "2"
+  #   memory: "1Gi"
+  requests:
+    cpu: "16"
+    memory: "8Gi"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+volumes: []
+
+volumeMounts: []
+
+extraObjects: []

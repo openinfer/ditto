@@ -1,0 +1,13 @@
+{{ if .Values.mongodb.collections }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mongo-connector.appname" . }}
+  namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "mongo-connector.labels" . | nindent 4 }}
+data:
+  mongodb_config.json: |
+    {{- .Values.mongodb.collections | nindent 4 }}
+{{ end }}

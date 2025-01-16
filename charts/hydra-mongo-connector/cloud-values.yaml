@@ -1,0 +1,58 @@
+replicaCount: 1
+imagePullSecrets:
+  - name: quay.io
+
+serviceMonitor:
+  enabled: true
+
+appId: "c547b527-039d-41a0-adc6-36dd643e7d0c"
+
+mongodb:
+  secret_name: "kai-test-secret"
+  collections: |
+    {
+      "collections": {
+        "user": {
+          "fields": ["name"]
+        }
+      }
+    }
+  configPath: "/etc/hydra-mongo-connector/mongodb_config.json"
+
+additionalEnv: []
+  # MongoDB -> Ditto Pipeline options
+  # - name: MDB_PROCESSOR_PARTITIONS_COUNT
+  #   value: "1500"
+  # - name: MDB_PROCESSOR_PARTITION_CHANNEL_CAPACITY
+  #   value: "8192"
+  # Ditto -> MongoDB Pipeline options
+  # - name: CDC_CONSUMER_CHANNEL_CAPACITY
+  #   value: "8192"
+  # - name:  CDC_PROCESSOR_PARTITIONS_COUNT
+  #   value: "1500"
+  # - name:  CDC_PROCESSOR_PARTITION_CHANNEL_CAPACITY
+  #   value: "8192"
+  # Batcher options
+  # - name: BATCHER_MAX_BATCH_SIZE
+  #   value: "100"
+  # - name: BATCHER_BATCH_INTERVAL
+  #   value: "100ms"
+  # Changestream options
+  # - name: CHANGE_STREAM_CHANNEL_CAPACITY
+  #   value: "20000"
+  # - name: CHANGE_STREAM_BATCH_SIZE
+  #   value: "20000"
+  # - name: CHANGE_STREAM_MAX_AWAIT
+  #   value: "1s"
+  # MongoDB client options
+  # - name: MDB_CLIENT_MAX_POOL_SIZE
+  #   value: "3000"
+  # - name: MDB_CLIENT_MIN_POOL_SIZE
+  #   value: "0"
+  # - name: MDB_CLIENT_MAX_CONNECTING
+  #   value: "100"
+
+tolerations:
+  - key: app.ditto.live/purpose
+    value: "benchmark"
+    effect: NoSchedule

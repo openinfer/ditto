@@ -1,0 +1,35 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  labels:
+    {{- include "mongo-connector.labels" . | nindent 4 }}
+    strimzi.io/cluster: "live-query-transport-kafka"
+  name: {{ include "mongo-connector.appname" . }}
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  authentication:
+    type: tls
+  authorization:
+    acls:
+    - operation: Read
+      resource:
+        name: kai-test-mongo-connector-cdc-consumer
+        patternType: literal
+        type: group
+      type: allow
+    - operation: Read
+      resource:
+        name: "hydra-cdc-output-{{ .Values.appId }}"
+        patternType: literal
+        type: topic
+      type: allow
+    type: simple
+  template:
+    secret:
+      metadata:
+        labels:
+          cloud.app.ditto.live/app-id: "{{ .Values.appId }}"
+          cloud.app.ditto.live/cluster-name: {{ .Values.hydraCluster.name }}
+          cloud.app.ditto.live/cluster-ns: "{{ trimSuffix "-lqt" .Release.Namespace }}"
+
+
