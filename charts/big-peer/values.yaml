@@ -49,29 +49,33 @@ global:
 
 apps:
   myApp:
-    enabled: false
+    enabled: true 
     id: 891c1bdb-71c6-40d5-9374-128e467c367e  # uuid generated via uuidgen
 
     liveQuery:
-      enabled: false
+      enabled: true
       queries:
         - name: "all_the_things"
           enabled: true
+          description: null
+          collection: null
           queryFilterExpression: "true"
           schema: untyped
           sinks:
             kafka:
               enabled: true
             webhook:
-              enabled: true
+              enabled: false
               url: "http://myapp.com/rimshot"
         - name: "send_to_hook"
-          enabled: true
+          enabled: false 
+          description: null
+          collection: null
           queryFilterExpression: "true"
           schema: untyped
           sinks:
             webhook:
-              enabled: true
+              enabled: false
               url: "http://myapp.com/rimshot"
 
 # global kafka cluster options
@@ -80,7 +84,7 @@ kafka:
     enabled: false
   # enable kraft mode for dual use Kafka nodes in a common node pool
   kraft:
-    enabled: false
+    enabled: true
     nodePool:
       dualRoles: true
       replicas: 1
@@ -111,7 +115,8 @@ ingress:
 
     # -- Provide additional annotations which may be required.
     annotations:
-      kubernetes.io/ingress.class: "gce"
+      {}
+      # kubernetes.io/ingress.class: traefik
       # kubernetes.io/tls-acme: "true"
 
     # -- Provide additional labels which may be required.
@@ -119,14 +124,17 @@ ingress:
 
     # -- Set the ingressClass that is used for this ingress.
     # Requires Kubernetes >=1.19
-    ingressClassName: gce # ditto
+    ingressClassName:  # "traefik"
 
     ## Configure the hosts for the ingress
     hosts:
-      - host: ditto.cvsauth.com
+      -  # -- Host address. Helm template can be passed.
+        host: chart-example.local
         ## Configure the paths for the host
         paths:
-          - path: /_ditto
+          -  # -- path.  helm template can be passed.
+            path: /_ditto
+            # -- ignored if not kubeversion >= 1.14-0
             pathtype: prefix
             service:
               # -- overrides the service name reference for this path
@@ -134,7 +142,9 @@ ingress:
               # -- overrides the service port reference for this path
               port: 8080
 
-          - path: /
+          -  # -- path.  helm template can be passed.
+            path: /
+            # -- ignored if not kubeversion >= 1.14-0
             pathtype: prefix
             service:
               # -- overrides the service name reference for this path
@@ -143,10 +153,7 @@ ingress:
               port: 10080
 
     # -- Configure TLS for the ingress. Both secretName and hosts can process a Helm template.
-    tls:
-      - hosts:
-          - ditto.cvsauth.com
-        secretName: cvsauth.com
+    tls: []
 
 ########################################################################
 # Hades Default Values
@@ -471,7 +478,7 @@ hydra-subscription:
     wsPort: 8080
     httpPort: 10080
 
-  clusterDomain: cvsauth.com
+  clusterDomain: local
 
   ingress:
     enabled: false
@@ -808,8 +815,8 @@ live-query:
   env:
     # Main config
     INSTANCE_NAME: "live-query-resource-controller"
-    LIVE_QUERY_WATCHER_NAMESPACE: "bp"
-    TARGET_NAMESPACE_TEMPLATE: "bp"
+    LIVE_QUERY_WATCHER_NAMESPACE: "default"
+    TARGET_NAMESPACE_TEMPLATE: "default"
     APP_LABEL_SELECTOR: "app.kubernetes.io/instance=ditto-bp"
     DEPLOY_NETWORK_POLICIES: false
     DEPLOY_SERVICE_MONITORS: false
@@ -826,6 +833,8 @@ live-query:
     CDC_IMAGE: quay.io/ditto-external/hydra-cdc:1.39.2
     CDC_TOKEN_AUDIENCE: cloud.ditto.live
     CDC_KAFKA_REPLICATION_FACTOR: 1
+
+    LIVE_QUERY_SOURCE_TOPIC_REPLICAS: 1
 
     # StreamSplitter workload config
     STREAM_SPLITTER_RESOURCE_REQUEST_CPU: 20m
@@ -854,16 +863,20 @@ live-query-kafka:
     enabled: false
   # enable kraft mode for dual use Kafka nodes in a common node pool
   kraft:
-    enabled: false
+    enabled: true
     nodePool:
       dualRoles: true
       replicas: 1
 
+
   # disable kafka supporting services that are not required
   strimzi:
-    replicas: 3
+    replicas: 1
     authorization: simple
-    external: true
+
+    externalListener:
+      enabled: false
+
 
     # interBrokerProtocolVersion: 3.8.0
     kafkaVersion: 3.8.0

@@ -15,10 +15,10 @@ imagePullSecrets: []
 serviceMonitor:
   enabled: false
 
-appId: ""
+appId: "891c1bdb-71c6-40d5-9374-128e467c367e"
 
 hydraCluster:
-  name: hydra-store
+  name: ditto-bp-hydra-store
   queryUrl: "http://{{ $.Values.hydraCluster.name }}:8080/"
   sessionUrl: "dnssrv+_http._tcp.{{ $.Values.hydraCluster.name }}-session"
   transactionsTopic: "{{ $.Values.hydraCluster.name }}-{{ $.Release.Namespace }}-transactions"
@@ -34,15 +34,16 @@ consul:
   httpSslVerify: false
 
 kafka:
-  clusterName: kafka
+  storeClusterName: ditto-bp-kafka
+  cdcClusterName: ditto-bp-live-query-kafka
   namespace: "{{ .Release.Namespace }}"
   # These are all kind of "hardcoded" refering to the live-query value.yaml and assume
   # the kafka used by CDC is the same as the one with hydra-store.
   #
   # We would need to inject the correct value and setting up proper network policy
   # for production.
-  storeKafkaBootstrapHost: "{{ tpl $.Values.kafka.clusterName . }}-kafka-brokers.{{ tpl $.Values.kafka.namespace . }}:9092"
-  cdcKafkaBootstrapHost: "live-query-transport-{{ tpl $.Values.kafka.clusterName . }}-kafka-bootstrap.{{ tpl $.Values.kafka.namespace . }}:9093"
+  storeKafkaBootstrapHost: "{{ tpl $.Values.kafka.storeClusterName . }}-kafka-brokers.{{ tpl $.Values.kafka.namespace . }}:9092"
+  cdcKafkaBootstrapHost: "{{ tpl $.Values.kafka.cdcClusterName . }}-kafka-bootstrap.{{ tpl $.Values.kafka.namespace . }}:9093"
   cdcTopic: "hydra-cdc-output-{{ tpl $.Values.appId . }}"
 
 mongodb:
@@ -54,10 +55,10 @@ mongodb:
 
   # If secret_name is provided this will be ignored
   # "mongodb+srv://user:password@cluster_endpoint/?retryWrites=true&w=majority&appName=Cluster0"
-  connection_string: ""
+  connection_string: "mongodb+srv://<user>:<password>@<url>/?retryWrites=true&w=majority&appName=Cluster0"
 
   # If secret_name is provided this will be ignored
-  database: ""
+  database: "<my_database>"
 
   # json Object containing the collection name and the fields to be used as the key
   # collections: |-
@@ -66,7 +67,12 @@ mongodb:
   #       "fields": ["field1", "field2"]
   #     }
   #   }
-  collections:
+  collections: |-
+    {"collections":{
+      "<my_collection>": {
+        "fields": ["_id"]
+      }
+    }}
 
   configPath: "/etc/hydra-mongo-connector/mongodb_config.json"
 
@@ -91,9 +97,9 @@ resources:
   # limits:
   #   cpu: "2"
   #   memory: "1Gi"
-  requests:
-    cpu: "16"
-    memory: "8Gi"
+  # requests:
+  #  cpu: "16"
+  #  memory: "8Gi"
 
 nodeSelector: {}
 

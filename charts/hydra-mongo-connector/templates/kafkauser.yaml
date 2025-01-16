@@ -3,7 +3,7 @@ kind: KafkaUser
 metadata:
   labels:
     {{- include "mongo-connector.labels" . | nindent 4 }}
-    strimzi.io/cluster: "live-query-transport-kafka"
+    strimzi.io/cluster: {{ $.Values.kafka.cdcClusterName }}
   name: {{ include "mongo-connector.appname" . }}
   namespace: "{{ .Release.Namespace }}"
 spec:
